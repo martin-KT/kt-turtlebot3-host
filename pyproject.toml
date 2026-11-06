@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kt-turtlebot3-host"
+version = "0.1.0"
+description = "Host-side subscriber that reads the TurtleBot3 lidar scan from kt_lan."
+authors = [{name = "martin-kt"}]
+requires-python = ">=3.9.0"
+dependencies = [
+  "starlette>=0.37.0",
+  "uvicorn[standard]>=0.30.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

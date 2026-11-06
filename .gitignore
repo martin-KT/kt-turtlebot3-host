@@ -1,0 +1,12 @@
+.ktm/
+_pack/
+.cursor/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+scripts/build/ktm-output/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/

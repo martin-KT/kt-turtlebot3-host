@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "4",
+  "id": "kt-turtlebot3-host",
+  "package": "./package.ktm.json",
+  "execution": {
+    "algorithm": {
+      "mode": "fixed_rate",
+      "frequencyHz": 50,
+      "missedTickPolicy": "skip",
+      "overrunPolicy": "skip"
+    }
+  },
+  "transport": {
+    "kt_lan": {
+      "routes": {
+        "scan": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "imu": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "battery": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "joints": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "sensor_state": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "camera": {
+          "mode": "subscriber",
+          "addr": "192.168.0.101:48110"
+        },
+        "cmd_vel": {
+          "mode": "client",
+          "addr": "192.168.0.101:48110"
+        }
+      }
+    }
+  },
+  "channelDefaults": [
+    {
+      "match": {"direction": "input", "transport": "kt_lan"},
+      "buffer": {"capacity": 8, "treatment": "drop_old"}
+    },
+    {
+      "match": {"direction": "output", "transport": "kt_lan"},
+      "buffer": {"capacity": 4, "treatment": "drop_old"}
+    }
+  ],
+  "channelOverrides": {
+    "camera": {
+      "codec": {"decode": "passthrough", "encode": "passthrough"}
+    }
+  },
+  "config": {
+    "http_bind_host": "127.0.0.1",
+    "http_port": 8765,
+    "open_browser": true,
+    "base_frame": "base_link",
+    "robot_icon_radius_m": 0.15,
+    "max_range_m": 3.5,
+    "sidebar_width_percent": 25,
+    "max_linear_m_s": 0.22,
+    "max_angular_rad_s": 2.84,
+    "imu_plot_window_s": 5.0,
+    "telemetry_push_hz": 20.0,
+    "wheel_joint_name_substrings": ["wheel"]
+  }
+}

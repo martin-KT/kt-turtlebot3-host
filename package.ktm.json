@@ -1,0 +1,233 @@
+{
+  "config": {
+    "properties": {
+      "base_frame": {
+        "default": "base_link",
+        "description": "Robot frame label for the top-down plot.",
+        "type": "string",
+        "x-kt-mutability": "static"
+      },
+      "http_bind_host": {
+        "default": "127.0.0.1",
+        "description": "Bind address for the lidar web UI (localhost for demo safety).",
+        "type": "string",
+        "x-kt-mutability": "static"
+      },
+      "http_port": {
+        "default": 8765,
+        "description": "HTTP/WebSocket port for the browser visualization.",
+        "maximum": 65535,
+        "minimum": 1,
+        "type": "integer",
+        "x-kt-mutability": "static"
+      },
+      "imu_plot_window_s": {
+        "default": 5.0,
+        "description": "IMU trace ring buffer horizon in the browser (seconds).",
+        "maximum": 30.0,
+        "minimum": 1.0,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "max_angular_rad_s": {
+        "default": 2.84,
+        "description": "Slider and cmd_vel clamp for angular.z (rad/s).",
+        "maximum": 6.0,
+        "minimum": 0.1,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "max_linear_m_s": {
+        "default": 0.22,
+        "description": "Slider and cmd_vel clamp for linear.x (m/s).",
+        "maximum": 1.0,
+        "minimum": 0.01,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "max_range_m": {
+        "default": 3.5,
+        "description": "Plot scale and upper range clamp for valid returns (metres).",
+        "minimum": 0.5,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "open_browser": {
+        "default": true,
+        "description": "Open the default browser once when the process starts.",
+        "type": "boolean",
+        "x-kt-mutability": "dynamic"
+      },
+      "robot_icon_radius_m": {
+        "default": 0.15,
+        "description": "Radius of the robot disc drawn at the origin (metres).",
+        "minimum": 0.01,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "sidebar_width_percent": {
+        "default": 25,
+        "description": "Width of the telemetry sidebar as a fraction of the browser window (%).",
+        "maximum": 45,
+        "minimum": 15,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "telemetry_push_hz": {
+        "default": 20.0,
+        "description": "Maximum WebSocket broadcast rate for telemetry updates.",
+        "maximum": 50.0,
+        "minimum": 1.0,
+        "type": "number",
+        "x-kt-mutability": "static"
+      },
+      "wheel_joint_name_substrings": {
+        "default": [
+          "wheel"
+        ],
+        "description": "Filter proprioception raw_joints by name substring for the sidebar table.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "x-kt-mutability": "static"
+      }
+    },
+    "required": [],
+    "type": "object"
+  },
+  "dataflow": {
+    "inputs": [
+      {
+        "datatype": "kt/exteroception/exteroception_sample",
+        "description": "50 Hz lidar snapshot published by kt-turtlebot3-driver on kt_lan.",
+        "name": "scan",
+        "required": false
+      },
+      {
+        "datatype": "kt/exteroception/exteroception_sample",
+        "description": "IMU sample from the gateway. Not printed and not drawn.",
+        "name": "imu",
+        "required": false
+      },
+      {
+        "datatype": "kt/interoception/interoception_sample",
+        "description": "Battery sample from the gateway. Not printed and not drawn.",
+        "name": "battery",
+        "required": false
+      },
+      {
+        "datatype": "kt/proprioception/proprioception_sample",
+        "description": "Joint sample from the gateway. Not printed and not drawn.",
+        "name": "joints",
+        "required": false
+      },
+      {
+        "datatype": "kt/common/element_array",
+        "description": "OpenCR sensor state from the gateway. Not printed and not drawn.",
+        "name": "sensor_state",
+        "required": false
+      },
+      {
+        "datatype": "kt/vision/image_sample",
+        "description": "H.264 access units from the gateway. A JPEG is pushed only when frame_number changes.",
+        "name": "camera",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "datatype": "kt/motor/motor_sample",
+        "description": "Wheel velocity from the browser cmd_vel UI at 50 Hz, sent to the gateway as a kt_lan client.",
+        "name": "cmd_vel"
+      }
+    ]
+  },
+  "dependencies": {
+    "optional": [],
+    "packages": [
+      {
+        "environmentSelector": "target",
+        "name": "kt-python-sdk",
+        "owner": "kinematic-trees",
+        "version": "0.2.5"
+      }
+    ],
+    "system": []
+  },
+  "metadata": {
+    "author": "martin-kt",
+    "description": "Host-side subscriber that reads the TurtleBot3 lidar scan and camera from kt_lan.",
+    "keywords": [
+      "kinematic-trees",
+      "robotics",
+      "kt-process",
+      "python"
+    ],
+    "language": "python",
+    "license": "MIT",
+    "name": "kt-turtlebot3-host",
+    "namespace": "martin-kt",
+    "packageType": "process",
+    "readme": "# kt-turtlebot3-host\n\nEditable Kinematic Trees `python` project created from a KTM-installed libkt boilerplate package.\n\nKTM copied this project out of the immutable package store so you can edit it normally. Work in this directory, not in the installed boilerplate package.\n\nFor a fresh project, `ktm project run` suffices; `project dev` is not a prerequisite. The sequence below shows the optional development watcher and packaging workflow.\n\n## Start here\n\n```bash\nktm project dev\nktm project test\nktm project run\nktm project pack\n```\n\nThe generated process is a complete HTTP echo. While `ktm project run` is\nrunning, send a request from another terminal:\n\n```bash\ncurl --fail-with-body \\\n  --output /dev/null \\\n  -H 'Content-Type: application/octet-stream' \\\n  --data-binary 'Hello from KT' \\\n  http://127.0.0.1:8080/input\n\ncurl --fail-with-body http://127.0.0.1:8080/output\n```\n\nThe second command prints:\n\n```text\nHello from KT\n```\n\n`ktm project dev` is the watched development path (`project run --watch`). It uses the verified dependency graph, prepares the managed environment, builds and runs, and watches coherent source changes until Ctrl-C. Use `ktm project build --watch` to rebuild without launching. A failed or partial save does not replace the last-known-good immutable development revision. Use `ktm project build` when a script or CI job needs one finite convergence, and run `ktm project dev --help` for supported watcher controls.\n\n`ktm project run` selects this project directly. It prepares and builds a verified captured revision before execution.\nOn Linux, KTM can acquire and start the verified local runtime controller without device enrollment. Offline execution requires the controller package inputs already installed. KTM selects the managed Python environment,\nbinds imports to the selected source or immutable revision (not a different editable checkout),\npasses the selected package manifest and private runtime document as literal\narguments, and invokes Python without a shell. An installed package coordinate\nuses the same structured recipe and managed environment.\n\n## Advanced diagnostics\n\n```bash\nktm project build\nktm project inspect --view health\nktm project inspect --view environment\nktm project generate\n```\n\nThese diagnostic commands are useful when investigating a failure, but they\nare not prerequisites for the beginner workflow.\n\nRecommended first edit:\n\n```text\nsrc/kt_turtlebot3_host/process.py\n```\n\nThe starter is intentionally runnable before you edit it. Its `step` callback\nreads every opaque request body from the `input` channel and writes the same\nbytes to `output`. Replace that relay with your application behavior. When your\nprocess understands a KT datatype, prefer the generated typed accessors under\n`_generated` over raw channel access.\n\n`runtime.json` binds the HTTP transport to localhost port 8080, maps\n`POST /input` to the input channel, and maps `GET /output` to the output\nchannel. The localhost binding keeps this beginner example off external\ninterfaces unless you deliberately change it.\n\n## Package and runtime roles\n\nThe root `package.ktm.json` is the distributable package contract: identity,\ndependencies, build recipes, Python compatibility, channels, and configuration\nschema. The sibling `runtime.json` is a deployment-instance contract: it links\nto `./package.ktm.json` and may supply routing, scheduling, channel policy, and\nconcrete configuration values. There is no second package definition and no\ngenerated `runtime/` directory.\n\nStarter conformance tests live in the SDK repository instead of every generated\nproject. `scripts/test.py` still gives developers a fast source/import smoke\ncheck; add application tests as you replace the echo behavior.\n\nFor direct SDK debugging:\n\n```bash\npython -m kt_turtlebot3_host \\\n  --package package.ktm.json \\\n  --runtime runtime.json\n```\n\n## Dependency model\n\nThe generated `package.ktm.json` directly declares only\n`kinematic-trees/kt-python-sdk`, which includes its adapter. The SDK declares the\nmanaged Python tool, libkt and Messages; KTM resolves them recursively for the\nselected target and records the exact installed graph. Do not repeat the SDK's\ndependencies in this starter. Add direct package dependencies when your own\napplication needs additional packages.\n`pyproject.toml` is your authority for ordinary third-party Python packages.\nAdd them explicitly under `[project].dependencies`, for example:\n\n```toml\ndependencies = [\"opencv-python-headless==4.10.0.84\"]\n```\n\nOn `ktm project dev` and `ktm project test`, KTM first installs its integrity-verified graph\nwheels, then installs this project and resolves these declared dependencies in\nthe same managed environment. Project dependencies cannot replace a KTM-owned\ndistribution. KTM never runs `pip freeze` or writes dependency changes back to\n`pyproject.toml`; choose and review version constraints yourself. A clean\nmachine therefore needs access to the configured Python package index unless\nthe declaration uses an accessible direct URL.\n\nThe starter imports every collision-free datatype namespace:\n\n```python\nfrom kt.messages import *\n```\n\nUse the schema namespace to select a generated type, for example\n`vision_sample.ImageSample`, so common names such as `Vector3` cannot collide.\n\nYou normally do **not** need to export `CPATH`, `LIBRARY_PATH`, `LD_LIBRARY_PATH`, `PKG_CONFIG_PATH`, or `CMAKE_PREFIX_PATH` yourself. KTM supplies those when you use `ktm project dev`, `ktm project build`, and `ktm project test`.\n\nPython calls and source remain portable. The default `source` archive does not vendor managed\nPython, `libkt`, the Python SDK, `kt-messages`, or a virtual environment; KTM\ninstalls the declared dependency closure for the selected host environment.\n`ktm project pack` preserves `pyproject.toml` byte-for-byte, excludes the managed\nenvironment, and does not freeze or vendor resolved Python dependencies. Pack\ncan still prepare dependencies while running its build/test qualification. Bare `ktm project pack`\nuses this portable source mode. `ktm-pack.json` also retains a\n`compiled-source` policy definition; selecting alternative pack modes is not exposed by this v2 CLI. Do not copy dependency artifacts into the process package.\n\n## Environment inspection\n\n```bash\nktm project inspect --view environment\nktm project inspect --view health\n```\n\nThese are read-only observations of declarations and verified installed inputs.\nThey do not prepare an environment or emit shell commands. Run authored build,\ntest and runtime recipes through KTM; there is no v2 `env --shell`/`eval` setup step.\nStatic inspection is not proof that an application will run. `project run` needs\na compatible local controller; its HTTP echo is the actual runtime check.\n",
+    "readmeFilename": "README.md",
+    "version": "0.1.0"
+  },
+  "resources": {
+    "gpu": false,
+    "ports": [
+      {
+        "description": "HTTP and WebSocket for the lidar browser visualization",
+        "port": 8765,
+        "protocol": "tcp"
+      }
+    ],
+    "x11": false
+  },
+  "runEnvironments": [
+    {
+      "name": "portable",
+      "recipes": [
+        {
+          "action": "build",
+          "command": {
+            "args": [],
+            "program": "scripts/build.py"
+          },
+          "timeoutSeconds": 300
+        },
+        {
+          "action": "test",
+          "command": {
+            "args": [],
+            "program": "scripts/test.py"
+          },
+          "timeoutSeconds": 600
+        },
+        {
+          "action": "run",
+          "command": {
+            "args": [
+              "-m",
+              "kt_turtlebot3_host",
+              "--package",
+              "${KTM_PACKAGE_MANIFEST}",
+              "--runtime",
+              "${KTM_RUNTIME_DOCUMENT}"
+            ],
+            "program": "python"
+          }
+        }
+      ],
+      "type": "portable"
+    }
+  ],
+  "runtime": {
+    "adapterOutputs": {
+      "generated": "src/kt_turtlebot3_host/_generated"
+    },
+    "languageVersion": ">=3.9.0",
+    "sdk": "python"
+  },
+  "schemaVersion": "4"
+}

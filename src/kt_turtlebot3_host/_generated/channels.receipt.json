@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "ktm.python-channels.v1",
+  "generator": "ktm.python-channels.v1",
+  "inputSha256": "45bbe388760d3ea58350feed8d9c9aab3dc32166527c860648b3a757f4623154",
+  "dataflowSha256": "297cf2185798bbcb4084df6df77ee7fcd1b5132daf0806dd457ad0f4e20f6e36",
+  "descriptors": [
+    {
+      "identity": {
+        "namespace": "kinematic-trees",
+        "name": "kt-messages",
+        "version": "0.1.0+build.41683",
+        "environment": "portable"
+      },
+      "schemaVersion": 1,
+      "path": "share/python-datatypes.v1.json",
+      "sha256": "e4abf5bcc0ec85dae5d7cd529e8c878b82c65e20ba2ed1f91ebcf3a87f1997e0"
+    }
+  ],
+  "channels": [
+    {
+      "name": "battery",
+      "datatype": "kt/interoception/interoception_sample",
+      "direction": "input",
+      "identifier": "battery"
+    },
+    {
+      "name": "camera",
+      "datatype": "kt/vision/image_sample",
+      "direction": "input",
+      "identifier": "camera"
+    },
+    {
+      "name": "imu",
+      "datatype": "kt/exteroception/exteroception_sample",
+      "direction": "input",
+      "identifier": "imu"
+    },
+    {
+      "name": "joints",
+      "datatype": "kt/proprioception/proprioception_sample",
+      "direction": "input",
+      "identifier": "joints"
+    },
+    {
+      "name": "scan",
+      "datatype": "kt/exteroception/exteroception_sample",
+      "direction": "input",
+      "identifier": "scan"
+    },
+    {
+      "name": "sensor_state",
+      "datatype": "kt/common/element_array",
+      "direction": "input",
+      "identifier": "sensor_state"
+    },
+    {
+      "name": "cmd_vel",
+      "datatype": "kt/motor/motor_sample",
+      "direction": "output",
+      "identifier": "cmd_vel"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "__init__.py",
+      "sha256": "c29e75d28b50c4c06d5e735ff9bf6031fbf52e398f7f5c89fffa76103408db8c"
+    },
+    {
+      "path": "channels.py",
+      "sha256": "f495afb9ee523fd70682c835af5be809e9d370cd33a23edf06bfd310b52a246d"
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://kinematictrees.io/schemas/ktm_runtime.schema",
+  "title": "Kinematic Trees Node Runtime Config v4",
+  "description": "Production per-node runtime configuration consumed by kt_node RuntimeConfig.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "package"],
+  "properties": {
+    "schemaVersion": { "const": "4" },
+    "id": { "type": "string" },
+    "package": { "type": "string" },
+    "config": {},
+    "execution": {
+      "anyOf": [
+        { "$ref": "#/definitions/nodeExecution" },
+        { "type": "null" }
+      ]
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/transportRuntime" }
+    },
+    "channelDefaults": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/channelPolicyRule" }
+    },
+    "channelOverrides": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/channelPolicy" }
+    }
+  },
+  "definitions": {
+    "u16OrNull": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "u32OrNull": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "u64OrNull": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "usizeOrNull": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "i32OrNull": {
+      "type": ["integer", "null"],
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    },
+    "i64OrNull": {
+      "type": ["integer", "null"],
+      "minimum": -9223372036854775808,
+      "maximum": 9223372036854775807
+    },
+    "stringOrNull": {
+      "type": ["string", "null"]
+    },
+    "booleanOrNull": {
+      "type": ["boolean", "null"]
+    },
+    "communicationModeOrNull": {
+      "enum": [null, "server", "client", "publisher", "subscriber", "requester", "responder", "publish", "subscribe", "reader", "writer"]
+    },
+    "transportKindOrNull": {
+      "enum": [null, "http", "webrtc", "ros1", "ros2", "dds", "kt_shm", "kt_lan", "kt_wan"]
+    },
+    "transportRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bind": {
+          "anyOf": [
+            { "$ref": "#/definitions/transportBind" },
+            { "type": "null" }
+          ]
+        },
+        "signaling": {
+          "anyOf": [
+            { "$ref": "#/definitions/webrtcSignaling" },
+            { "type": "null" }
+          ]
+        },
+        "session": {
+          "anyOf": [
+            { "$ref": "#/definitions/webrtcSession" },
+            { "type": "null" }
+          ]
+        },
+        "ice": {
+          "anyOf": [
+            { "$ref": "#/definitions/webrtcIce" },
+            { "type": "null" }
+          ]
+        },
+        "node": {
+          "anyOf": [
+            { "$ref": "#/definitions/transportNode" },
+            { "type": "null" }
+          ]
+        },
+        "domainId": { "$ref": "#/definitions/u32OrNull" },
+        "routes": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/transportRoute" }
+        }
+      }
+    },
+    "transportBind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port"],
+      "properties": {
+        "interface": { "type": "string" },
+        "port": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "tls": { "type": "boolean" }
+      }
+    },
+    "webrtcSignaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "$ref": "#/definitions/stringOrNull" },
+        "role": { "$ref": "#/definitions/stringOrNull" }
+      }
+    },
+    "webrtcSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "controlChannel": { "$ref": "#/definitions/stringOrNull" },
+        "videoSlots": { "$ref": "#/definitions/u16OrNull" },
+        "protocolVersion": { "$ref": "#/definitions/u32OrNull" },
+        "identity": { "$ref": "#/definitions/stringOrNull" },
+        "peerIdentity": { "$ref": "#/definitions/stringOrNull" },
+        "requireOfferMetadata": { "$ref": "#/definitions/booleanOrNull" },
+        "securityMode": { "$ref": "#/definitions/stringOrNull" },
+        "pairingTokenSha256": { "$ref": "#/definitions/stringOrNull" },
+        "bindInputSourceToSession": { "$ref": "#/definitions/booleanOrNull" },
+        "allowedOrigins": { "type": "array", "items": { "type": "string" } },
+        "signalingMaxBodyBytes": { "$ref": "#/definitions/usizeOrNull" },
+        "signalingRateLimitPerSecond": { "$ref": "#/definitions/u64OrNull" },
+        "signalingPendingRequests": { "$ref": "#/definitions/usizeOrNull" }
+      }
+    },
+    "webrtcIce": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "servers": { "type": "array", "items": {} }
+      }
+    },
+    "transportNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "namespace": { "$ref": "#/definitions/stringOrNull" },
+        "name": { "$ref": "#/definitions/stringOrNull" }
+      }
+    },
+    "transportRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "$ref": "#/definitions/communicationModeOrNull" },
+        "path": { "$ref": "#/definitions/stringOrNull" },
+        "method": { "$ref": "#/definitions/stringOrNull" },
+        "service": { "$ref": "#/definitions/stringOrNull" },
+        "addr": { "$ref": "#/definitions/stringOrNull" },
+        "subscriberBufferSize": { "$ref": "#/definitions/usizeOrNull" },
+        "maxSampleSize": { "$ref": "#/definitions/usizeOrNull" },
+        "publishDuplicates": { "type": "boolean" },
+        "pollIntervalMs": { "$ref": "#/definitions/u64OrNull" },
+        "discoveryIntervalMs": { "$ref": "#/definitions/u64OrNull" },
+        "wire": {
+          "anyOf": [
+            { "$ref": "#/definitions/routeWire" },
+            { "type": "null" }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            { "$ref": "#/definitions/routeSource" },
+            { "type": "null" }
+          ]
+        },
+        "media": { "$ref": "#/definitions/stringOrNull" },
+        "kind": { "$ref": "#/definitions/stringOrNull" },
+        "reliability": { "$ref": "#/definitions/stringOrNull" },
+        "ttlMs": { "$ref": "#/definitions/u64OrNull" },
+        "topic": { "$ref": "#/definitions/stringOrNull" },
+        "messageType": { "$ref": "#/definitions/stringOrNull" },
+        "qos": { "$ref": "#/definitions/stringOrNull" },
+        "queueSize": { "$ref": "#/definitions/usizeOrNull" },
+        "latching": { "$ref": "#/definitions/booleanOrNull" },
+        "keyedData": { "$ref": "#/definitions/booleanOrNull" },
+        "domainId": { "$ref": "#/definitions/u32OrNull" },
+        "type": { "$ref": "#/definitions/stringOrNull" }
+      }
+    },
+    "routeWire": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shape": { "enum": [null, "element", "collection"] },
+        "channel": { "$ref": "#/definitions/stringOrNull" }
+      }
+    },
+    "routeSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "enum": [null, "default", "fixed", "glob_capture", "payload"] },
+        "value": { "$ref": "#/definitions/stringOrNull" }
+      }
+    },
+    "nodeExecution": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "anyOf": [
+            { "$ref": "#/definitions/algorithmExecution" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "algorithmExecution": {
+      "type": "object",
+      "properties": {
+        "mode": { "enum": [null, "event_driven", "fixed_rate"] },
+        "frequencyHz": { "type": ["number", "null"] },
+        "missedTickPolicy": { "enum": [null, "skip"] },
+        "overrunPolicy": { "enum": [null, "skip"] }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "frequencyHz": { "type": ["number", "null"] },
+        "maxLatencyMs": { "$ref": "#/definitions/u64OrNull" },
+        "timeoutMs": { "$ref": "#/definitions/u64OrNull" }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "properties": {
+        "capacity": { "type": "integer", "minimum": 0, "maximum": 18446744073709551615 },
+        "treatment": { "enum": ["drop_old", "drop_new", "latch"] },
+        "freshnessMs": { "$ref": "#/definitions/u64OrNull" }
+      }
+    },
+    "channelSelector": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/definitions/stringOrNull" },
+        "direction": { "$ref": "#/definitions/stringOrNull" },
+        "transport": { "$ref": "#/definitions/transportKindOrNull" }
+      }
+    },
+    "channelPolicyRule": {
+      "type": "object",
+      "properties": {
+        "match": { "$ref": "#/definitions/channelSelector" },
+        "timing": {
+          "anyOf": [
+            { "$ref": "#/definitions/timing" },
+            { "type": "null" }
+          ]
+        },
+        "buffer": {
+          "anyOf": [
+            { "$ref": "#/definitions/buffer" },
+            { "type": "null" }
+          ]
+        },
+        "codec": {
+          "anyOf": [
+            { "$ref": "#/definitions/codecPolicy" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "channelPolicy": {
+      "type": "object",
+      "properties": {
+        "timing": {
+          "anyOf": [
+            { "$ref": "#/definitions/timing" },
+            { "type": "null" }
+          ]
+        },
+        "buffer": {
+          "anyOf": [
+            { "$ref": "#/definitions/buffer" },
+            { "type": "null" }
+          ]
+        },
+        "codec": {
+          "anyOf": [
+            { "$ref": "#/definitions/codecPolicy" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "codecPolicy": {
+      "type": "object",
+      "properties": {
+        "decode": { "enum": [null, "auto", "passthrough", "required"] },
+        "encode": { "enum": [null, "auto", "passthrough", "required"] },
+        "options": {
+          "anyOf": [
+            { "$ref": "#/definitions/codecOptions" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "codecOptions": {
+      "type": "object",
+      "properties": {
+        "h264BitrateBps": { "$ref": "#/definitions/i64OrNull" },
+        "h264ConstantQp": { "$ref": "#/definitions/i32OrNull" },
+        "h264ThreadCount": { "$ref": "#/definitions/i32OrNull" },
+        "h264KeyframeIntervalFrames": { "$ref": "#/definitions/i32OrNull" },
+        "h264Fps": { "$ref": "#/definitions/u32OrNull" },
+        "h264Preset": { "$ref": "#/definitions/stringOrNull" },
+        "h264Tune": { "$ref": "#/definitions/stringOrNull" }
+      }
+    }
+  }
+}

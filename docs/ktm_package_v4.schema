@@ -1,0 +1,3198 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://kinematictrees.io/schemas/ktm_package_v4.schema",
+  "title": "Kinematic Trees Package Contract",
+  "description": "Package lifecycle contract v4. Explicit primary type, source selection outside the manifest, and preserved consumer capabilities. Runtime-instance versioning is independent.",
+  "x-kt-platformCatalog": {
+    "version": 1,
+    "description": "Canonical platform vocabulary for consumers and authoring. This annotation does not restrict v4 validation; name identifies a build variant independently. Missing or unlisted pairs are not evidence of incompatibility. Portable environments do not imply native or browser compatibility.",
+    "operatingSystems": [
+      {
+        "id": "linux",
+        "label": "Linux",
+        "aliases": []
+      },
+      {
+        "id": "windows",
+        "label": "Windows",
+        "aliases": [
+          "win32",
+          "win64"
+        ]
+      },
+      {
+        "id": "darwin",
+        "label": "macOS",
+        "aliases": [
+          "macos",
+          "osx"
+        ]
+      },
+      {
+        "id": "android",
+        "label": "Android",
+        "aliases": []
+      },
+      {
+        "id": "browser",
+        "label": "Browser",
+        "aliases": [
+          "web"
+        ]
+      }
+    ],
+    "architectures": [
+      {
+        "id": "x86",
+        "label": "x86",
+        "detail": "32-bit Intel / AMD",
+        "aliases": [
+          "386",
+          "i386",
+          "i686",
+          "ia32"
+        ]
+      },
+      {
+        "id": "x64",
+        "label": "x86-64",
+        "detail": "64-bit Intel / AMD",
+        "aliases": [
+          "amd64",
+          "x86_64",
+          "x86-64"
+        ]
+      },
+      {
+        "id": "arm",
+        "label": "ARM32",
+        "detail": "32-bit ARM",
+        "aliases": [
+          "arm32",
+          "armv7",
+          "armv7l",
+          "armhf"
+        ]
+      },
+      {
+        "id": "arm64",
+        "label": "ARM64",
+        "detail": "64-bit ARM",
+        "aliases": [
+          "aarch64"
+        ]
+      },
+      {
+        "id": "wasm32",
+        "label": "WASM",
+        "detail": "WebAssembly (32-bit memory model)",
+        "aliases": [
+          "wasm"
+        ]
+      }
+    ],
+    "pairs": [
+      {
+        "os": "linux",
+        "arch": "x86"
+      },
+      {
+        "os": "linux",
+        "arch": "x64"
+      },
+      {
+        "os": "linux",
+        "arch": "arm"
+      },
+      {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      {
+        "os": "windows",
+        "arch": "x86"
+      },
+      {
+        "os": "windows",
+        "arch": "x64"
+      },
+      {
+        "os": "windows",
+        "arch": "arm64"
+      },
+      {
+        "os": "darwin",
+        "arch": "x64"
+      },
+      {
+        "os": "darwin",
+        "arch": "arm64"
+      },
+      {
+        "os": "android",
+        "arch": "x86"
+      },
+      {
+        "os": "android",
+        "arch": "x64"
+      },
+      {
+        "os": "android",
+        "arch": "arm"
+      },
+      {
+        "os": "android",
+        "arch": "arm64"
+      },
+      {
+        "os": "browser",
+        "arch": "wasm32"
+      }
+    ]
+  },
+  "definitions": {
+    "packageName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9._-]*$(?![\\s\\S])",
+      "not": {
+        "enum": [
+          "node_modules",
+          "favicon.ico"
+        ]
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$(?![\\s\\S])"
+    },
+    "exactSemver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+build\\.([1-9][0-9]*))?$(?![\\s\\S])",
+      "minLength": 5,
+      "maxLength": 256
+    },
+    "npmSemverSelector": {
+      "type": "string",
+      "description": "npm-style SemVer dependency selector. Supports exact/core SemVer, exact +build.N pins, tilde, caret, and whitespace-separated comparator sets. Build metadata is allowed only on exact pins; unbounded latest/* and OR ranges are intentionally excluded for lifecycle package dependencies.",
+      "pattern": "^(?:(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+build\\.(?:[1-9][0-9]*))?|[~^](?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?|(?:<|<=|>|>=)\\s*(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\s+(?:<|<=|>|>=)\\s*(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?)*)$(?![\\s\\S])",
+      "minLength": 5,
+      "maxLength": 256
+    },
+    "dependencyVersionSelector": {
+      "description": "Dependency version request. Exact immutable versions must use registry build metadata (+build.N); non-exact selectors are resolved by KTM into exact immutable versions and recorded in locks/receipts.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/exactSemver"
+        },
+        {
+          "$ref": "#/definitions/npmSemverSelector"
+        }
+      ]
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?![A-Za-z]:)(?![\\s\\S]*[\\u0000-\\u001f\\u007f-\\u009f])(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)[^\\u0000]+$(?![\\s\\S])"
+    },
+    "safeBasename": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^(?![A-Za-z]:)(?![\\s\\S]*[\\u0000-\\u001f\\u007f-\\u009f])(?!\\.\\.?$)(?!.*[\\\\/])[^\\u0000]+$(?![\\s\\S])"
+    },
+    "sha512SRI": {
+      "type": "string",
+      "pattern": "^sha512-[A-Za-z0-9+/]{86}==$(?![\\s\\S])"
+    },
+    "developmentV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "watcherBackend": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "native",
+            "polling"
+          ]
+        },
+        "failureBehavior": {
+          "type": "string",
+          "enum": [
+            "retain-last-known-good"
+          ]
+        },
+        "debounceMs": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 5000
+        },
+        "settleMs": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 30000
+        },
+        "pollIntervalMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000
+        },
+        "restartGraceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        },
+        "restartBackoffMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        },
+        "retainedRevisions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "metadataV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "version",
+        "author",
+        "packageType"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/packageName"
+        },
+        "namespace": {
+          "$ref": "#/definitions/packageName"
+        },
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/exactSemver"
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maintainers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "email"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
+            }
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "license": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "git"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "bugs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "readme": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2097152,
+          "description": "Packaged Markdown text. Shared semantics require nonblank strict UTF-8 without BOM/C0/C1 controls (except tab/CR/LF), at most 2 MiB bytes. Preserve exact CR/LF and final newline. Required consumer/release, optional source before materialization. Shape-only validation does not establish text semantics or staged agreement."
+        },
+        "readmeFilename": {
+          "$ref": "#/definitions/documentationRelativePath",
+          "description": "Contained package-root-relative literal Markdown path, never URL decoded. Required consumer/release; decoded staged file must equal readme."
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$(?![\\s\\S])"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$(?![\\s\\S])"
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cpu",
+            "memory",
+            "disk",
+            "network"
+          ],
+          "properties": {
+            "cpu": {
+              "type": "number",
+              "minimum": 0.1
+            },
+            "memory": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "disk": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "network": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "publishLocation": {
+          "type": "string",
+          "enum": [
+            "local",
+            "remote"
+          ],
+          "description": "Delivery model: local content or remotely provided service. Not privacy or registry URL."
+        },
+        "packageType": {
+          "description": "Primary package purpose used for discovery and selecting appropriate handling. Exported capabilities may span multiple uses.",
+          "enum": [
+            "process",
+            "runtime",
+            "library",
+            "data_types",
+            "studio_extension",
+            "robot",
+            "tool",
+            "template"
+          ]
+        },
+        "media": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/definitions/mediaItem"
+          },
+          "description": "Optional ordered images/videos; empty is valid. Package sources/posters/captions must ship in required common selected content, inventoried at Pack. No arbitrary embeds."
+        },
+        "releaseMaturity": {
+          "type": "string",
+          "enum": [
+            "experimental",
+            "alpha",
+            "beta",
+            "rc",
+            "stable"
+          ],
+          "description": "Developer release maturity label; independent of version selection and visibility. Absence means unspecified, never inferred stable."
+        }
+      }
+    },
+    "dataflowInputV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "datatype"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$(?![\\s\\S])"
+        },
+        "datatype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "dataflowOutputV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "datatype"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$(?![\\s\\S])"
+        },
+        "datatype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "dataflowV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataflowInputV4"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataflowOutputV4"
+          }
+        }
+      }
+    },
+    "runtimeV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sdk"
+      ],
+      "properties": {
+        "sdk": {
+          "type": "string",
+          "enum": [
+            "python",
+            "csharp",
+            "go",
+            "rust",
+            "cpp",
+            "native",
+            "c-abi-v1"
+          ]
+        },
+        "sdkVersion": {
+          "type": "string"
+        },
+        "languageVersion": {
+          "type": "string"
+        },
+        "adapterOutputs": {
+          "description": "SDK-template-owned mapping from opaque adapter staging slot names to project-relative roots owned by the adapter.",
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 64,
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$(?![\\s\\S])"
+          },
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/safeRelativePath"
+              },
+              {
+                "pattern": "[^/]$(?![\\s\\S])"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "configSchemaV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/configTypedPropertyV4"
+              },
+              {
+                "$ref": "#/definitions/configUnionPropertyV4"
+              }
+            ]
+          }
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "configTypedPropertyV4": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "array",
+            "object"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {},
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array"
+        },
+        "items": {
+          "type": "object"
+        },
+        "x-kt-mutability": {
+          "type": "string",
+          "enum": [
+            "static",
+            "dynamic"
+          ]
+        }
+      },
+      "not": {
+        "required": [
+          "oneOf"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "x-kt-mutability": {
+                "const": "dynamic"
+              }
+            },
+            "required": [
+              "x-kt-mutability"
+            ]
+          },
+          "then": {
+            "required": [
+              "default"
+            ]
+          }
+        }
+      ]
+    },
+    "configUnionBranchV4": {
+      "description": "Strict typed subset for configuration union branches. Unsupported operators fail admission instead of becoming ignored runtime constraints.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "array",
+            "object"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {},
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "items": {
+          "$ref": "#/definitions/configUnionBranchV4"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/configUnionBranchV4"
+          }
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "configUnionPropertyV4": {
+      "description": "An explicit oneOf union without a competing sibling type. Defaults remain parent annotations; branch defaults are never selected speculatively.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oneOf"
+      ],
+      "properties": {
+        "oneOf": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/definitions/configUnionBranchV4"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {},
+        "x-kt-mutability": {
+          "enum": [
+            "static",
+            "dynamic"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "x-kt-mutability": {
+                "const": "dynamic"
+              }
+            },
+            "required": [
+              "x-kt-mutability"
+            ]
+          },
+          "then": {
+            "required": [
+              "default"
+            ]
+          }
+        }
+      ]
+    },
+    "serviceV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoints",
+        "authentication"
+      ],
+      "properties": {
+        "endpoints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "api"
+          ],
+          "properties": {
+            "api": {
+              "type": "string",
+              "format": "uri"
+            },
+            "health": {
+              "type": "string",
+              "format": "uri"
+            },
+            "docs": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "authentication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "required"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "none",
+                "bearer",
+                "api_key",
+                "oauth2"
+              ]
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "envVar": {
+              "type": "string"
+            }
+          }
+        },
+        "rateLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requests",
+            "period"
+          ],
+          "properties": {
+            "requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "period": {
+              "type": "string",
+              "enum": [
+                "second",
+                "minute",
+                "hour",
+                "day"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "hostRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "libc"
+      ],
+      "properties": {
+        "libc": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "implementation",
+            "minimumVersion"
+          ],
+          "properties": {
+            "implementation": {
+              "type": "string",
+              "enum": [
+                "glibc"
+              ]
+            },
+            "minimumVersion": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.[0-9]+(?:\\.[0-9]+)?$(?![\\s\\S])"
+            }
+          }
+        }
+      }
+    },
+    "pathArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/runtimeExportPath"
+      }
+    },
+    "pythonRuntimePackageArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "path"
+      ],
+      "properties": {
+        "format": {
+          "const": "wheel"
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/runtimeExportPath"
+            },
+            {
+              "pattern": "\\.whl$(?![\\s\\S])"
+            }
+          ]
+        }
+      }
+    },
+    "pythonRuntimePackageMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "importNames",
+        "requiresPython"
+      ],
+      "properties": {
+        "importNames": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*$(?![\\s\\S])"
+          }
+        },
+        "requiresPython": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^(?:(?:~=|==|!=|<=|>=|<|>)?(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,2})(?:\\s*,\\s*(?:(?:~=|==|!=|<=|>=|<|>)?(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,2}))*$(?![\\s\\S])"
+        }
+      }
+    },
+    "pythonRuntimePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifact",
+        "python"
+      ],
+      "properties": {
+        "ecosystem": {
+          "const": "python"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "artifact": {
+          "$ref": "#/definitions/pythonRuntimePackageArtifact"
+        },
+        "python": {
+          "$ref": "#/definitions/pythonRuntimePackageMetadata"
+        }
+      }
+    },
+    "nugetRuntimePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifact",
+        "nuget"
+      ],
+      "properties": {
+        "ecosystem": {
+          "const": "nuget"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "path"
+          ],
+          "properties": {
+            "format": {
+              "const": "nupkg"
+            },
+            "path": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/runtimeExportPath"
+                },
+                {
+                  "pattern": "\\.nupkg$(?![\\s\\S])"
+                }
+              ]
+            }
+          }
+        },
+        "nuget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "targetFrameworks",
+            "assemblyNames"
+          ],
+          "properties": {
+            "targetFrameworks": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$(?![\\s\\S])"
+              }
+            },
+            "assemblyNames": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$(?![\\s\\S])"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cppRuntimePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifact",
+        "cpp"
+      ],
+      "properties": {
+        "ecosystem": {
+          "const": "cpp"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "path"
+          ],
+          "properties": {
+            "format": {
+              "const": "tar.gz"
+            },
+            "path": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/runtimeExportPath"
+                },
+                {
+                  "pattern": "\\.tar\\.gz$(?![\\s\\S])"
+                }
+              ]
+            }
+          }
+        },
+        "cpp": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "includePaths",
+            "cmakePackageNames",
+            "pkgConfigNames"
+          ],
+          "properties": {
+            "includePaths": {
+              "$ref": "#/definitions/pathArray"
+            },
+            "cmakePackageNames": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_.+-]*$(?![\\s\\S])"
+              }
+            },
+            "pkgConfigNames": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$(?![\\s\\S])"
+              }
+            }
+          }
+        }
+      }
+    },
+    "goRuntimePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifact",
+        "go"
+      ],
+      "properties": {
+        "ecosystem": {
+          "const": "go"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "path"
+          ],
+          "properties": {
+            "format": {
+              "const": "module-zip"
+            },
+            "path": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/runtimeExportPath"
+                },
+                {
+                  "pattern": "\\.zip$(?![\\s\\S])"
+                }
+              ]
+            }
+          }
+        },
+        "go": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modulePath",
+            "packagePaths",
+            "goVersion"
+          ],
+          "properties": {
+            "modulePath": {
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^(?!.*//)(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)+$(?![\\s\\S])"
+            },
+            "packagePaths": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^(?!.*//)(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*$(?![\\s\\S])"
+              }
+            },
+            "goVersion": {
+              "type": "string",
+              "pattern": "^1\\.(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*))?$(?![\\s\\S])"
+            }
+          }
+        }
+      }
+    },
+    "cargoRuntimePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifact",
+        "cargo"
+      ],
+      "properties": {
+        "ecosystem": {
+          "const": "cargo"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "path"
+          ],
+          "properties": {
+            "format": {
+              "const": "crate"
+            },
+            "path": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/runtimeExportPath"
+                },
+                {
+                  "pattern": "\\.crate$(?![\\s\\S])"
+                }
+              ]
+            }
+          }
+        },
+        "cargo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "crateName",
+            "libName",
+            "rustVersion"
+          ],
+          "properties": {
+            "crateName": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$(?![\\s\\S])"
+            },
+            "libName": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$(?![\\s\\S])"
+            },
+            "rustVersion": {
+              "type": "string",
+              "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*))?$(?![\\s\\S])"
+            }
+          }
+        }
+      }
+    },
+    "runtimePackage": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/pythonRuntimePackage"
+        },
+        {
+          "$ref": "#/definitions/nugetRuntimePackage"
+        },
+        {
+          "$ref": "#/definitions/cppRuntimePackage"
+        },
+        {
+          "$ref": "#/definitions/goRuntimePackage"
+        },
+        {
+          "$ref": "#/definitions/cargoRuntimePackage"
+        }
+      ]
+    },
+    "runtimePackageArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/runtimePackage"
+      }
+    },
+    "runtimeReleaseManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "version",
+        "path"
+      ],
+      "properties": {
+        "format": {
+          "const": "ktm-runtime-release-v1"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){1,3}(?:[A-Za-z0-9._+-]*)$(?![\\s\\S])"
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/runtimeExportPath"
+            },
+            {
+              "pattern": "\\.json$(?![\\s\\S])"
+            }
+          ]
+        }
+      }
+    },
+    "pythonLanguageRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "version",
+        "interpreterPath",
+        "standardLibraryPath",
+        "capabilities"
+      ],
+      "properties": {
+        "language": {
+          "const": "python"
+        },
+        "version": {
+          "$ref": "#/definitions/exactSemver"
+        },
+        "interpreterPath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "standardLibraryPath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "includePaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "configPaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "venv"
+            ]
+          }
+        }
+      }
+    },
+    "languageRuntime": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/pythonLanguageRuntime"
+        }
+      ]
+    },
+    "languageRuntimeArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/languageRuntime"
+      }
+    },
+    "compilerToolchainTriple": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9]$(?![\\s\\S])"
+    },
+    "rustCompilerComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "executablePath"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "rustfmt",
+            "clippy"
+          ]
+        },
+        "executablePath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        }
+      }
+    },
+    "rustCompilerTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "triple",
+        "standardLibraryPath",
+        "linkerPath",
+        "runtimeLibraryPaths"
+      ],
+      "properties": {
+        "triple": {
+          "$ref": "#/definitions/compilerToolchainTriple"
+        },
+        "standardLibraryPath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "linkerPath": {
+          "description": "Contained executable selected by the resolved graph. Package provenance and host requirements must state whether it wraps a declared system linker or provides a self-contained linker closure.",
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "runtimeLibraryPaths": {
+          "$ref": "#/definitions/pathArray"
+        }
+      }
+    },
+    "rustCompilerToolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "version",
+        "cargoVersion",
+        "hostTriple",
+        "rustcPath",
+        "cargoPath",
+        "components",
+        "targets"
+      ],
+      "properties": {
+        "language": {
+          "const": "rust"
+        },
+        "version": {
+          "$ref": "#/definitions/exactSemver"
+        },
+        "cargoVersion": {
+          "$ref": "#/definitions/exactSemver"
+        },
+        "hostTriple": {
+          "$ref": "#/definitions/compilerToolchainTriple"
+        },
+        "rustcPath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "cargoPath": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/rustCompilerComponent"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/rustCompilerTarget"
+          }
+        }
+      }
+    },
+    "compilerToolchain": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/rustCompilerToolchain"
+        }
+      ]
+    },
+    "compilerToolchainArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/compilerToolchain"
+      }
+    },
+    "codegenDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "schemaVersion",
+        "path"
+      ],
+      "properties": {
+        "language": {
+          "enum": [
+            "python",
+            "go",
+            "cpp"
+          ]
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/runtimeExportPath"
+            },
+            {
+              "pattern": "\\.json$(?![\\s\\S])"
+            }
+          ]
+        }
+      }
+    },
+    "codegenDescriptorArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/codegenDescriptor"
+      }
+    },
+    "sdkAdapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sdk",
+        "protocol",
+        "executablePath",
+        "capabilities"
+      ],
+      "properties": {
+        "sdk": {
+          "description": "Opaque SDK identifier matched exactly against runtime.sdk.",
+          "$ref": "#/definitions/packageName"
+        },
+        "protocol": {
+          "const": "kt.sdk-adapter.v1"
+        },
+        "executablePath": {
+          "description": "Contained, integrity-covered executable path inside this package environment.",
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+\\.v[1-9][0-9]*$(?![\\s\\S])"
+          }
+        }
+      }
+    },
+    "sdkAdapterArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/sdkAdapter"
+      }
+    },
+    "runtimeExports": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "binPaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "libraryPaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "includePaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "pkgConfigPaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "cmakePrefixPaths": {
+          "$ref": "#/definitions/pathArray"
+        },
+        "runtimePackages": {
+          "$ref": "#/definitions/runtimePackageArray"
+        },
+        "languageRuntimes": {
+          "description": "Contained language interpreter exports. Consumers must select these from the resolved package graph rather than searching the host PATH.",
+          "$ref": "#/definitions/languageRuntimeArray"
+        },
+        "compilerToolchains": {
+          "description": "Contained compiler and package-manager exports selected from the resolved package graph without consulting ambient host toolchains.",
+          "$ref": "#/definitions/compilerToolchainArray"
+        },
+        "codegenDescriptors": {
+          "description": "Contained declarative datatype descriptor documents consumed by package-agnostic code generators without executing dependency code.",
+          "$ref": "#/definitions/codegenDescriptorArray"
+        },
+        "sdkAdapters": {
+          "description": "Contained SDK-owned executables implementing the language-neutral kt.sdk-adapter.v1 process contract.",
+          "$ref": "#/definitions/sdkAdapterArray"
+        },
+        "releaseManifest": {
+          "$ref": "#/definitions/runtimeReleaseManifest"
+        },
+        "entrypoints": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$(?![\\s\\S])",
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/entrypoint"
+          }
+        },
+        "descriptors": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/typedDescriptor"
+          }
+        }
+      }
+    },
+    "structuredCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "args"
+      ],
+      "properties": {
+        "program": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runArgument": {
+      "description": "One literal argv element or one fixed KTM path placeholder. Placeholders are substituted only when the entire argument matches.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "${KTM_PACKAGE_MANIFEST}",
+            "${KTM_RUNTIME_DOCUMENT}"
+          ]
+        },
+        {
+          "type": "string",
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]*$(?![\\s\\S])",
+          "not": {
+            "pattern": "\\$\\{"
+          }
+        }
+      ]
+    },
+    "runCommand": {
+      "description": "Shell-free run invocation. The program is resolved from the selected package/SDK environment and args are passed directly without shell parsing.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "args"
+      ],
+      "properties": {
+        "program": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u001f\\u007f-\\u009f])(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9_+.-]+(?:/[A-Za-z0-9_+.-]+)*$(?![\\s\\S])",
+          "not": {
+            "pattern": "(^|/)(?:[Ss][Hh]|[Bb][Aa][Ss][Hh]|[Dd][Aa][Ss][Hh]|[Zz][Ss][Hh]|[Ff][Ii][Ss][Hh]|[Cc][Mm][Dd]|[Pp][Oo][Ww][Ee][Rr][Ss][Hh][Ee][Ll][Ll]|[Pp][Ww][Ss][Hh]|[Ee][Nn][Vv]|[Ss][Uu][Dd][Oo]|[Ss][Uu]|[Dd][Oo][Aa][Ss]|[Pp][Kk][Ee][Xx][Ee][Cc])(?:\\.[Ee][Xx][Ee])?$(?![\\s\\S])"
+          }
+        },
+        "args": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/definitions/runArgument"
+          }
+        }
+      }
+    },
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "clean",
+            "build",
+            "test",
+            "run",
+            "install"
+          ]
+        },
+        "command": {
+          "$ref": "#/definitions/structuredCommand"
+        },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "extends": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+$(?![\\s\\S])"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        },
+        "description": {
+          "type": "string"
+        },
+        "workingDirectory": {
+          "type": "string"
+        },
+        "compose": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "command"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "commands"
+                ]
+              },
+              {
+                "required": [
+                  "extends"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "required": [
+            "commands"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "command"
+                ]
+              },
+              {
+                "required": [
+                  "extends"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "required": [
+            "extends"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "command"
+                ]
+              },
+              {
+                "required": [
+                  "commands"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "action",
+              "command"
+            ],
+            "properties": {
+              "action": {
+                "const": "run"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "command": {
+                "$ref": "#/definitions/runCommand"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "recipes"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/environmentName"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "native",
+            "container",
+            "portable"
+          ]
+        },
+        "os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "hostRequirements": {
+          "$ref": "#/definitions/hostRequirements"
+        },
+        "runtimeExports": {
+          "$ref": "#/definitions/runtimeExports"
+        },
+        "recipes": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "$ref": "#/definitions/recipe"
+          }
+        },
+        "testedPlatforms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/testedPlatform"
+          }
+        },
+        "componentExports": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/definitions/componentId"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/runtimeExports"
+          },
+          "description": "Capabilities exposed only by the corresponding selected component."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "portable"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "os"
+                  ]
+                },
+                {
+                  "required": [
+                    "arch"
+                  ]
+                },
+                {
+                  "required": [
+                    "hostRequirements"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "runtimeExports": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "binPaths"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "libraryPaths"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "includePaths"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "pkgConfigPaths"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "cmakePrefixPaths"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "languageRuntimes"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "compilerToolchains"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "componentExports": {
+                "additionalProperties": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "binPaths"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "libraryPaths"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "includePaths"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "pkgConfigPaths"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "cmakePrefixPaths"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "languageRuntimes"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "compilerToolchains"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "os",
+              "arch"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "hostRequirements"
+            ]
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "const": "native"
+              },
+              "os": {
+                "const": "linux"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "packageDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "name",
+        "version"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/packageName"
+        },
+        "name": {
+          "$ref": "#/definitions/packageName"
+        },
+        "version": {
+          "$ref": "#/definitions/dependencyVersionSelector"
+        },
+        "environmentSelector": {
+          "description": "Select the dependency environment by projecting the resolution request's normalized target through this edge.",
+          "const": "target"
+        },
+        "environments": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/definitions/environmentName"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/environmentName"
+          }
+        },
+        "whenComponents": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/componentId"
+          },
+          "description": "Activate this dependency only when one of these components is selected; absent means always active.",
+          "minItems": 1
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "environments"
+          ],
+          "not": {
+            "required": [
+              "environmentSelector"
+            ]
+          }
+        },
+        {
+          "required": [
+            "environmentSelector"
+          ],
+          "not": {
+            "required": [
+              "environments"
+            ]
+          }
+        }
+      ]
+    },
+    "dependenciesV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "system": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/systemLibraryDependency"
+              }
+            ]
+          },
+          "uniqueItems": true
+        },
+        "packages": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/packageDependency"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "resourcesV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "port",
+              "protocol"
+            ],
+            "properties": {
+              "port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "protocol": {
+                "type": "string",
+                "enum": [
+                  "tcp",
+                  "udp"
+                ]
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "gpu": {
+          "type": "boolean"
+        },
+        "x11": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sidecars": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sbom": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "provenance": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "linkAudit": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "dependencyLock": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "buildEnvironment": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "buildReceipt": {
+          "$ref": "#/definitions/runtimeExportPath"
+        },
+        "adoptionReceipt": {
+          "$ref": "#/definitions/runtimeExportPath"
+        }
+      },
+      "minProperties": 1
+    },
+    "strictArtifactBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment",
+        "url",
+        "integrity",
+        "size",
+        "format",
+        "component",
+        "consumerManifestDigest",
+        "inventory"
+      ],
+      "properties": {
+        "environment": {
+          "$ref": "#/definitions/environmentName"
+        },
+        "url": {
+          "$ref": "#/definitions/artifactUrlReference"
+        },
+        "integrity": {
+          "$ref": "#/definitions/sha512SRI"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "tar.gz",
+            "zip",
+            "deb",
+            "rpm"
+          ]
+        },
+        "sidecars": {
+          "$ref": "#/definitions/sidecars"
+        },
+        "component": {
+          "$ref": "#/definitions/componentId"
+        },
+        "consumerManifestDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "inventory": {
+          "$ref": "#/definitions/inventoryReference"
+        }
+      }
+    },
+    "localArtifact": {
+      "$ref": "#/definitions/strictArtifactBase"
+    },
+    "externalArtifact": {
+      "$ref": "#/definitions/strictArtifactBase"
+    },
+    "legacyArtifact": {
+      "$ref": "#/definitions/strictArtifactBase"
+    },
+    "distributionV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/strictArtifactBase"
+          },
+          "uniqueItems": true
+        },
+        "urlStrategy": {
+          "type": "string",
+          "enum": [
+            "local-relative",
+            "external-base",
+            "registry-authorized"
+          ]
+        },
+        "urlBase": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^?#]+/?$(?![\\s\\S])"
+        },
+        "registry": {
+          "type": "string",
+          "format": "uri"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/artifactComponent"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "urlStrategy": {
+                "const": "local-relative"
+              }
+            },
+            "required": [
+              "urlStrategy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "packages": {
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/strictArtifactBase"
+                    },
+                    {
+                      "properties": {
+                        "url": {
+                          "$ref": "#/definitions/safeRelativePath"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "urlStrategy": {
+                "const": "external-base"
+              }
+            },
+            "required": [
+              "urlStrategy"
+            ]
+          },
+          "then": {
+            "required": [
+              "urlBase"
+            ],
+            "properties": {
+              "packages": {
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/strictArtifactBase"
+                    },
+                    {
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "pattern": "^https://[^\\s\\u0000-\\u001F\\u007F\\\\]+$(?![\\s\\S])"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "lifecyclePackageV4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "metadata",
+        "runEnvironments"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "4"
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadataV4"
+        },
+        "dataflow": {
+          "$ref": "#/definitions/dataflowV4"
+        },
+        "runtime": {
+          "$ref": "#/definitions/runtimeV4"
+        },
+        "development": {
+          "$ref": "#/definitions/developmentV4"
+        },
+        "config": {
+          "$ref": "#/definitions/configSchemaV4"
+        },
+        "service": {
+          "$ref": "#/definitions/serviceV4"
+        },
+        "runEnvironments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/runEnvironment"
+          }
+        },
+        "dependencies": {
+          "$ref": "#/definitions/dependenciesV4"
+        },
+        "resources": {
+          "$ref": "#/definitions/resourcesV4"
+        },
+        "distribution": {
+          "$ref": "#/definitions/distributionV4"
+        },
+        "template": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "generates",
+            "descriptor"
+          ],
+          "properties": {
+            "generates": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "process",
+                    "runtime",
+                    "library",
+                    "data_types",
+                    "studio_extension",
+                    "robot",
+                    "tool",
+                    "template"
+                  ]
+                },
+                "language": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Template language selector; runtime-only. Actual availability is discovered from template packages."
+                }
+              },
+              "if": {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "process",
+                      "runtime"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "language"
+                ]
+              },
+              "else": {
+                "not": {
+                  "required": [
+                    "language"
+                  ]
+                }
+              }
+            },
+            "descriptor": {
+              "$ref": "#/definitions/descriptorReference"
+            }
+          },
+          "description": "Template discovery metadata and pointer to its operational descriptor. Rendering and testing controls belong in the referenced file."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "metadata": {
+                "required": [
+                  "publishLocation"
+                ],
+                "properties": {
+                  "publishLocation": {
+                    "const": "remote"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "service"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "metadata": {
+                "properties": {
+                  "packageType": {
+                    "enum": [
+                      "process",
+                      "runtime"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "runtime"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "metadata": {
+                "properties": {
+                  "packageType": {
+                    "const": "template"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "template"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "template"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "testedPlatform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "minVersion",
+        "maxVersion"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$(?![\\s\\S])"
+        },
+        "minVersion": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.[0-9]+(?:\\.[0-9]+)?$(?![\\s\\S])"
+        },
+        "maxVersion": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.[0-9]+(?:\\.[0-9]+)?$(?![\\s\\S])"
+        }
+      }
+    },
+    "runtimeExportPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001f\\u007f-\\u009f])[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$(?![\\s\\S])",
+      "not": {
+        "pattern": "(^|/)\\.{1,2}(/|$)"
+      }
+    },
+    "artifactUrlReference": {
+      "type": "string",
+      "format": "uri-reference",
+      "minLength": 1,
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001f\\u007f-\\u009f])[^\\s\\u0000-\\u001F\\u007F\\\\]+$(?![\\s\\S])"
+    },
+    "componentId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$(?![\\s\\S])",
+      "maxLength": 128
+    },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "descriptorReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaId",
+        "path"
+      ],
+      "properties": {
+        "schemaId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/definitions/safeRelativePath"
+        }
+      }
+    },
+    "entrypoint": {
+      "description": "Named explicit invocation: package-relative program and literal argument vector. Declaration never implies execution on install.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "args"
+      ],
+      "properties": {
+        "program": {
+          "$ref": "#/definitions/runCommand/properties/program"
+        },
+        "args": {
+          "$ref": "#/definitions/runCommand/properties/args"
+        },
+        "workingDirectory": {
+          "$ref": "#/definitions/safeRelativePath"
+        },
+        "interpreter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "owner",
+            "name",
+            "entrypoint"
+          ],
+          "properties": {
+            "owner": {
+              "$ref": "#/definitions/packageName"
+            },
+            "name": {
+              "$ref": "#/definitions/packageName"
+            },
+            "entrypoint": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$(?![\\s\\S])",
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    },
+    "typedDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "schemaId",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$(?![\\s\\S])",
+          "maxLength": 128
+        },
+        "schemaId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/definitions/safeRelativePath"
+        }
+      }
+    },
+    "artifactComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "required",
+        "default",
+        "requires"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/componentId"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/componentId"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "inventoryReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/safeRelativePath"
+        },
+        "sha256": {
+          "$ref": "#/definitions/sha256Digest"
+        }
+      }
+    },
+    "sourcePackageV4": {
+      "description": "Authoring view: keep recipes/development, declare components, but do not author generated release records. File selection stays in ktm-pack.json.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/lifecyclePackageV4"
+        },
+        {
+          "properties": {
+            "distribution": {
+              "properties": {
+                "packages": false,
+                "urlStrategy": false,
+                "urlBase": false,
+                "registry": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "publishedPackageV4": {
+      "description": "Common consumer/release view: no development block or build/test/install/clean recipes. Launch commands remain structured and explicit.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/lifecyclePackageV4"
+        },
+        {
+          "not": {
+            "required": [
+              "development"
+            ]
+          },
+          "properties": {
+            "runEnvironments": {
+              "items": {
+                "properties": {
+                  "recipes": {
+                    "items": {
+                      "required": [
+                        "command"
+                      ],
+                      "properties": {
+                        "action": {
+                          "const": "run"
+                        },
+                        "commands": false,
+                        "extends": false
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "required": [
+                "readme",
+                "readmeFilename"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "consumerPackageV4": {
+      "description": "Manifest inside the archive. Retains capability/component declarations, not external artifact records or evidence hashes that would create self-hash cycles.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/publishedPackageV4"
+        },
+        {
+          "properties": {
+            "distribution": {
+              "properties": {
+                "packages": false,
+                "urlStrategy": false,
+                "urlBase": false,
+                "registry": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "releasePackageV4": {
+      "description": "External consumer projection plus finalized artifact index. File-backed releases require at least one artifact; a remote service need not invent one.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/publishedPackageV4"
+        },
+        {
+          "if": {
+            "properties": {
+              "metadata": {
+                "required": [
+                  "publishLocation"
+                ],
+                "properties": {
+                  "publishLocation": {
+                    "const": "remote"
+                  }
+                }
+              }
+            }
+          },
+          "then": {},
+          "else": {
+            "required": [
+              "distribution"
+            ],
+            "properties": {
+              "distribution": {
+                "required": [
+                  "packages"
+                ],
+                "properties": {
+                  "packages": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "documentationHttpsURL": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 4096,
+      "pattern": "^(?![\\s\\S]*[\\ud800-\\udfff])https://[^/?#@\\s]+(?:/[^?#\\s]*)?$(?![\\s\\S])"
+    },
+    "mediaSource": {
+      "description": "Offline direct-asset reference. Literal package-root path, no percent decoding. External HTTPS: no userinfo/query/fragment, no provider watch/embed pages or remote fetch. MIME is a declaration, not byte-format proof.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "path",
+            "mediaType"
+          ],
+          "properties": {
+            "kind": {
+              "const": "package"
+            },
+            "path": {
+              "$ref": "#/definitions/documentationRelativePath"
+            },
+            "mediaType": {
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/gif",
+                "image/avif",
+                "video/mp4",
+                "video/webm",
+                "video/ogg",
+                "text/vtt"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "url",
+            "mediaType"
+          ],
+          "properties": {
+            "kind": {
+              "const": "external"
+            },
+            "url": {
+              "$ref": "#/definitions/documentationHttpsURL"
+            },
+            "mediaType": {
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/gif",
+                "image/avif",
+                "video/mp4",
+                "video/webm",
+                "video/ogg",
+                "text/vtt"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "imageMediaSource": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/mediaSource"
+        },
+        {
+          "properties": {
+            "mediaType": {
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/gif",
+                "image/avif"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "videoMediaSource": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/mediaSource"
+        },
+        {
+          "properties": {
+            "mediaType": {
+              "enum": [
+                "video/mp4",
+                "video/webm",
+                "video/ogg"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "captionMediaSource": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/mediaSource"
+        },
+        {
+          "properties": {
+            "mediaType": {
+              "enum": [
+                "text/vtt"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "mediaCaptionTrack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "language",
+        "label"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/captionMediaSource"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 63,
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$(?![\\s\\S])"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+        },
+        "default": {
+          "type": "boolean"
+        }
+      }
+    },
+    "mediaItem": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "source",
+            "alt"
+          ],
+          "properties": {
+            "kind": {
+              "const": "image"
+            },
+            "source": {
+              "$ref": "#/definitions/imageMediaSource"
+            },
+            "alt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "attribution": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "license": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "provenance": {
+              "$ref": "#/definitions/documentationHttpsURL"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "source",
+            "title"
+          ],
+          "properties": {
+            "kind": {
+              "const": "video"
+            },
+            "source": {
+              "$ref": "#/definitions/videoMediaSource"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "attribution": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "license": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^(?![\\s\\S]*[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f\\ud800-\\udfff])[\\s\\S]*[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+            },
+            "provenance": {
+              "$ref": "#/definitions/documentationHttpsURL"
+            },
+            "poster": {
+              "$ref": "#/definitions/imageMediaSource"
+            },
+            "captions": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "#/definitions/mediaCaptionTrack"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "documentationRelativePath": {
+      "description": "Contained literal documentation path, no symlink components, colons or trailing separator; percent sequences stay literal.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/safeRelativePath"
+        },
+        {
+          "pattern": "^(?![\\s\\S]*[\\ud800-\\udfff])[^:]*[^/:]$(?![\\s\\S])"
+        }
+      ]
+    },
+    "systemLibraryDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "environments",
+        "reason"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$",
+          "description": "Exact system library name; no paths or wildcards."
+        },
+        "environments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/environmentName"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "$ref": "#/definitions/lifecyclePackageV4"
+}

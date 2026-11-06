@@ -1,6 +1,8 @@
 .ktm/
 _pack/
 .cursor/
+src/kt_turtlebot3_host/_generated/
+src/kt_turtlebot3_host/_generated.lock/
 **/__pycache__/
 *.py[cod]
 *.egg-info/
